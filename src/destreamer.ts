@@ -12,7 +12,7 @@ import { getVideoInfo, createUniquePath } from './VideoUtils';
 import cliProgress from 'cli-progress';
 import fs from 'fs';
 import isElevated from 'is-elevated';
-import puppeteer from 'puppeteer';
+import puppeteer, { executablePath } from 'puppeteer';
 import { ApiClient } from './ApiClient';
 
 
@@ -22,6 +22,8 @@ export const chromeCacheFolder = '.chrome_data';
 
 
 async function init(): Promise<void> {
+    const debug = require('debug')('init')
+    debug('calling setProcessEvents')
     setProcessEvents(); // must be first!
 
     if (argv.verbose) {
@@ -32,7 +34,9 @@ async function init(): Promise<void> {
         process.exit(ERROR_CODE.ELEVATED_SHELL);
     }
 
+    debug('calling checkRequirements')
     checkRequirements();
+    debug('after checkRequirements')
 
     if (argv.username) {
         logger.info(`Username: ${argv.username}`);
@@ -45,13 +49,19 @@ async function init(): Promise<void> {
 
 
 async function DoInteractiveLogin(url: string, username?: string): Promise<Session> {
+    const debug = require('debug')('DoInteractiveLogin')
 
     logger.info('Launching headless Chrome to perform the OpenID Connect dance...');
 
+    const executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    debug(`executablePath ${executablePath}`)
+
     const browser: puppeteer.Browser = await puppeteer.launch({
-        executablePath: getPuppeteerChromiumPath(),
+        // executablePath: getPuppeteerChromiumPath(),
+        executablePath: executablePath,
         headless: false,
-        userDataDir: (argv.keepLoginCookies) ? chromeCacheFolder : undefined,
+        // userDataDir: (argv.keepLoginCookies) ? chromeCacheFolder : undefined,
+        userDataDir: '/Users/b2186555/Library/Application Support/Google/Chrome/Default',
         args: [
             '--disable-dev-shm-usage',
             '--fast-start',
@@ -269,7 +279,10 @@ async function downloadVideo(videoGUIDs: Array<string>, outputDirectories: Array
 
 
 async function main(): Promise<void> {
+    const debug = require('debug')('main')
+    debug('calling init')
     await init(); // must be first
+    debug('after init')
 
     let session: Session;
     // eslint-disable-next-line prefer-const
